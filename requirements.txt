@@ -1,6 +1,5 @@
-Flask==2.3.3
-pandas==2.0.3
-openpyxl==3.1.2
-CoolProp==6.4.3
-gunicorn==21.2.0
-python-dotenv==1.0.0
+Flask
+pandas
+CoolProp
+gunicorn
+python-dotenv

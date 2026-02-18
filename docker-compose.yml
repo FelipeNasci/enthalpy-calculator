@@ -10,11 +10,11 @@ services:
       - ./:/app
     environment:
       - FLASK_ENV=production
-      - PYTHONUNBUFFERED=1
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5010/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      # - PYTHONUNBUFFERED=1
+    # restart: unless-stopped
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:5010/"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 40s

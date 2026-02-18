@@ -17,31 +17,257 @@ def hello_world():
     temperature = request.args.get("temperature")
     pressure = request.args.get("pressure")
     enthalpy_result = None
+    error_message = None
 
     if request.method == "POST":
-        temperature = request.form.get("temperature", "10")
-        pressure = request.form.get("pressure", "0")
-        enthalpy_result = calculateEnthalpy(float(temperature), float(pressure))
+        try:
+            temperature = request.form.get("temperature", "10")
+            pressure = request.form.get("pressure", "0")
+            temp_float = float(temperature)
+            pressure_float = float(pressure)
 
+            if temp_float <= 0:
+                error_message = "Temperature must be greater than 0"
+            elif pressure_float < 0:
+                error_message = "Pressure cannot be negative"
+            else:
+                enthalpy_result = calculateEnthalpy(temp_float, pressure_float)
+                if enthalpy_result is None:
+                    error_message = "Unable to calculate enthalpy for the given parameters"
+        except ValueError:
+            error_message = "Please enter valid numeric values"
+        except Exception as e:
+            error_message = f"Error calculating enthalpy: {str(e)}"
 
     return render_template_string("""
-<h1>Enthalpy Calculator</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enthalpy Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<form method="POST">
-  <label>Temperature:</label><br>
-  <input type="text" name="temperature" required value="{{ temperature }}"><br>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
 
-  <label>Pressure:</label><br>
-  <input type="text" name="pressure" required value="{{ pressure }}"><br><br>
+        .container {
+            width: 100%;
+            max-width: 500px;
+        }
 
-  <input type="submit" value="Calculate">
-</form>
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: box-shadow 0.3s ease;
+        }
 
-{% if enthalpy_result is not none %}
-<h2>Result:</h2>
-<p><strong>Enthalpy: {{ enthalpy_result }} kJ/kg</strong></p>
-{% endif %}
-""", temperature=temperature, pressure=pressure, enthalpy_result=enthalpy_result)
+        .card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .card-header h1 {
+            font-size: 28px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .card-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .card-content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group:last-of-type {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: 'Roboto', sans-serif;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            border-radius: 8px;
+            padding: 24px;
+            margin-top: 24px;
+            text-align: center;
+        }
+
+        .result-card h2 {
+            color: #2e7d32;
+            font-size: 18px;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .result-value {
+            font-size: 32px;
+            color: #1b5e20;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .result-unit {
+            font-size: 14px;
+            color: #2e7d32;
+            margin-top: 4px;
+        }
+
+        .error-card {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8787 100%);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            color: white;
+        }
+
+        .error-card p {
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .nav-links {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #eee;
+        }
+
+        .nav-links a {
+            display: inline-block;
+            margin: 0 12px;
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h1>Enthalpy Calculator</h1>
+                <p>Calculate thermodynamic enthalpy properties</p>
+            </div>
+
+            <div class="card-content">
+                <form method="POST">
+                    <div class="form-group">
+                        <label for="temp">Temperature (°C)</label>
+                        <input type="text" id="temp" name="temperature" placeholder="e.g., 100" value="{{ temperature or '' }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="press">Pressure (kg/cm²)</label>
+                        <input type="text" id="press" name="pressure" placeholder="e.g., 10" value="{{ pressure or '' }}" required>
+                    </div>
+
+                    <button type="submit">Calculate Enthalpy</button>
+                </form>
+
+                {% if enthalpy_result is not none %}
+                <div class="result-card">
+                    <h2>✓ Calculation Result</h2>
+                    <div class="result-value">{{ enthalpy_result }}</div>
+                    <div class="result-unit">kJ/kg</div>
+                </div>
+                {% endif %}
+
+                {% if error_message %}
+                <div class="error-card">
+                    <p>✗ {{ error_message }}</p>
+                </div>
+                {% endif %}
+
+                <div class="nav-links">
+                    <a href="/upload">Upload File</a>
+                    <a href="/flow">Mass Flow</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+""", temperature=temperature, pressure=pressure, enthalpy_result=enthalpy_result, error_message=error_message)
 
 @app.route("/upload", methods=["GET", "POST"])
 def upload():
@@ -100,39 +326,276 @@ def upload():
                     print(f"Error occurred: {error_message}")
 
     return render_template_string("""
-<h1>Enthalpy Calculator - XLSX Upload</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Enthalpy File</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<p>Upload an XLSX file to calculate and add enthalpy values.</p>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
 
-<form method="POST" enctype="multipart/form-data">
-  <label>Temperature Column Name:</label><br>
-  <input type="text" name="temp_column" placeholder="e.g., Temperature" required><br><br>
+        .container {
+            width: 100%;
+            max-width: 550px;
+        }
 
-  <label>Pressure Column Name:</label><br>
-  <input type="text" name="pressure_column" placeholder="e.g., Pressure" required><br><br>
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: box-shadow 0.3s ease;
+        }
 
-  <label>Enthalpy Output Column Name:</label><br>
-  <input type="text" name="enthalpy_column" placeholder="e.g., Enthalpy" required><br><br>
+        .card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
 
-  <label>Upload XLSX File:</label><br>
-  <input type="file" name="file" accept=".xlsx" required><br><br>
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
 
-  <input type="submit" value="Process File">
-</form>
+        .card-header h1 {
+            font-size: 28px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
 
-{% if success_message %}
-<p style="color: green;"><strong>✓ {{ success_message }}</strong></p>
-<p>Temperature Column: <strong>{{ temp_column }}</strong></p>
-<p>Pressure Column: <strong>{{ pressure_column }}</strong></p>
-<p>Enthalpy Output Column: <strong>{{ enthalpy_column }}</strong></p>
-{% if download_link %}
-<p><a href="{{ download_link }}" style="color: blue; text-decoration: underline;">Download newFile.xlsx</a></p>
-{% endif %}
-{% endif %}
+        .card-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
 
-{% if error_message %}
-<p style="color: red;"><strong>✗ Error: {{ error_message }}</strong></p>
-{% endif %}
+        .card-content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group:last-of-type {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: 'Roboto', sans-serif;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="file"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .success-card {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            border-radius: 8px;
+            padding: 24px;
+            margin-top: 24px;
+        }
+
+        .success-card h2 {
+            color: #2e7d32;
+            font-size: 18px;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .success-info {
+            color: #1b5e20;
+            font-size: 14px;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .success-info strong {
+            font-weight: 600;
+        }
+
+        .download-link {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 10px 20px;
+            background: white;
+            color: #2e7d32;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 500;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .download-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+        }
+
+        .error-card {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8787 100%);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            color: white;
+        }
+
+        .error-card p {
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .nav-links {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #eee;
+        }
+
+        .nav-links a {
+            display: inline-block;
+            margin: 0 12px;
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #764ba2;
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h1>Upload XLSX File</h1>
+                <p>Add enthalpy calculations to your spreadsheet</p>
+            </div>
+
+            <div class="card-content">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="temp_col">Temperature Column Name</label>
+                        <input type="text" id="temp_col" name="temp_column" placeholder="e.g., Temperature" required>
+                        <div class="form-hint">Name of the column containing temperature values</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="press_col">Pressure Column Name</label>
+                        <input type="text" id="press_col" name="pressure_column" placeholder="e.g., Pressure" required>
+                        <div class="form-hint">Name of the column containing pressure values</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="enth_col">Enthalpy Output Column Name</label>
+                        <input type="text" id="enth_col" name="enthalpy_column" placeholder="e.g., Enthalpy" required>
+                        <div class="form-hint">Name of the new column for calculated enthalpy values</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="file_upload">Select XLSX File</label>
+                        <input type="file" id="file_upload" name="file" accept=".xlsx" required>
+                        <div class="form-hint">Maximum file size: 16 MB</div>
+                    </div>
+
+                    <button type="submit">Process File</button>
+                </form>
+
+                {% if success_message %}
+                <div class="success-card">
+                    <h2>✓ File Processed Successfully</h2>
+                    <div class="success-info">
+                        <strong>File:</strong> {{ uploaded_file }}<br>
+                        <strong>Temperature Column:</strong> {{ temp_column }}<br>
+                        <strong>Pressure Column:</strong> {{ pressure_column }}<br>
+                        <strong>Enthalpy Column:</strong> {{ enthalpy_column }}
+                    </div>
+                    {% if download_link %}
+                    <a href="{{ download_link }}" class="download-link">Download processed_enthalpy.xlsx</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if error_message %}
+                <div class="error-card">
+                    <p>✗ {{ error_message }}</p>
+                </div>
+                {% endif %}
+
+                <div class="nav-links">
+                    <a href="/">Enthalpy Calculator</a>
+                    <a href="/flow">Mass Flow</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
 """, success_message=success_message, error_message=error_message, uploaded_file=uploaded_file,
      temp_column=temp_column, pressure_column=pressure_column, enthalpy_column=enthalpy_column,
      download_link=download_link)
@@ -185,41 +648,274 @@ def flow():
             error_message = f"Error calculating mass flow: {str(e)}"
 
     return render_template_string("""
-<h1>Mass Flow</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mass Flow Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<form method="POST">
-  <label>Temperature Input (°C):</label><br>
-  <input type="text" name="temperature_input" placeholder="Enter temperature" required><br><br>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
 
-  <label>Temperature Output (°C):</label><br>
-  <input type="text" name="temperature_output" placeholder="Temperature output" required><br><br>
+        .container {
+            width: 100%;
+            max-width: 600px;
+        }
 
-  <label>Pressure Input (kg/cm²):</label><br>
-  <input type="text" name="pressure_input" placeholder="Enter pressure" required><br><br>
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: box-shadow 0.3s ease;
+        }
 
-  <label>Pressure Output (kg/cm²):</label><br>
-  <input type="text" name="pressure_output" placeholder="Pressure output" required><br><br>
+        .card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
 
-  <label>Boiler Efficiency (%):</label><br>
-  <input type="text" name="boilerEfficiency" placeholder="Enter boiler efficiency" required><br><br>
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
 
-  <label>Machine Efficiency (%):</label><br>
-  <input type="text" name="machineEfficiency" placeholder="Enter machine efficiency" required><br><br>
+        .card-header h1 {
+            font-size: 28px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
 
-  <label>Electrical Work:</label><br>
-  <input type="text" name="ElectricalWork" placeholder="Enter electrical work" required><br><br>
+        .card-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
 
-  <input type="submit" value="Calculate Flow">
-</form>
+        .card-content {
+            padding: 30px;
+        }
 
-{% if result is not none %}
-<h2 style="color: green;">✓ Calculation Result:</h2>
-<p><strong>Mass Flow: {{ result }} kg/s</strong></p>
-{% endif %}
+        .form-group {
+            margin-bottom: 24px;
+        }
 
-{% if error_message %}
-<p style="color: red;"><strong>✗ Error: {{ error_message }}</strong></p>
-{% endif %}
+        .form-group:last-of-type {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: 'Roboto', sans-serif;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            border-radius: 8px;
+            padding: 24px;
+            margin-top: 24px;
+            text-align: center;
+        }
+
+        .result-card h2 {
+            color: #2e7d32;
+            font-size: 18px;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .result-value {
+            font-size: 32px;
+            color: #1b5e20;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .result-unit {
+            font-size: 14px;
+            color: #2e7d32;
+            margin-top: 4px;
+        }
+
+        .error-card {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8787 100%);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            color: white;
+        }
+
+        .error-card p {
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .material-icons {
+            font-size: 20px;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        .nav-links {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #eee;
+        }
+
+        .nav-links a {
+            display: inline-block;
+            margin: 0 12px;
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h1>Mass Flow Calculator</h1>
+                <p>Calculate thermodynamic mass flow parameters</p>
+            </div>
+
+            <div class="card-content">
+                <form method="POST">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="temp_in">Temperature Input (°C)</label>
+                            <input type="text" id="temp_in" name="temperature_input" placeholder="e.g., 100" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="temp_out">Temperature Output (°C)</label>
+                            <input type="text" id="temp_out" name="temperature_output" placeholder="e.g., 50" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="press_in">Pressure Input (kg/cm²)</label>
+                            <input type="text" id="press_in" name="pressure_input" placeholder="e.g., 10" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="press_out">Pressure Output (kg/cm²)</label>
+                            <input type="text" id="press_out" name="pressure_output" placeholder="e.g., 1" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="boiler">Boiler Efficiency (%)</label>
+                            <input type="text" id="boiler" name="boilerEfficiency" placeholder="e.g., 85" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="machine">Machine Efficiency (%)</label>
+                            <input type="text" id="machine" name="machineEfficiency" placeholder="e.g., 90" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="work">Electrical Work</label>
+                        <input type="text" id="work" name="ElectricalWork" placeholder="e.g., 1000" required>
+                    </div>
+
+                    <button type="submit">Calculate Flow</button>
+                </form>
+
+                {% if result is not none %}
+                <div class="result-card">
+                    <h2>✓ Calculation Result</h2>
+                    <div class="result-value">{{ result }}</div>
+                    <div class="result-unit">kg/s</div>
+                </div>
+                {% endif %}
+
+                {% if error_message %}
+                <div class="error-card">
+                    <p>✗ {{ error_message }}</p>
+                </div>
+                {% endif %}
+
+                <div class="nav-links">
+                    <a href="/">Enthalpy Calculator</a>
+                    <a href="/upload">Upload File</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
 """, result=result, error_message=error_message)
 
 @app.route("/download")
