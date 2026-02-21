@@ -918,6 +918,81 @@ def flow():
 </html>
 """, result=result, error_message=error_message)
 
+
+@app.route("/calc-sheet", methods=["GET", "POST"])
+def calc_sheet():
+
+    return render_template_string(
+        """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculate Spreadsheet</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Roboto', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+        .container { width:100%; max-width:600px; }
+        .card { background:white; border-radius:8px; padding:24px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+        .card-header { text-align:center; margin-bottom:16px; }
+        label { display:block; font-weight:500; margin-bottom:8px; }
+        input[type="text"], input[type="file"] { width:100%; padding:10px; border:1px solid #ddd; border-radius:4px; margin-bottom:12px; }
+        button { width:100%; padding:12px; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; border:none; border-radius:4px; cursor:pointer; }
+        .nav-links { text-align:center; margin-top:12px; }
+        .nav-links a { color:#667eea; margin:0 8px; text-decoration:none; font-weight:500; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h1>Calculate Spreadsheet</h1>
+                <p>Upload XLSX and indicate column names (frontend only)</p>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data">
+                <label for="temp_in_col">Temperature Input Column Name</label>
+                <input type="text" id="temp_in_col" name="temp_input_column" placeholder="e.g., Temp In" required>
+
+                <label for="temp_out_col">Temperature Output Column Name</label>
+                <input type="text" id="temp_out_col" name="temp_output_column" placeholder="e.g., Temp Out" required>
+
+                <label for="press_in_col">Pressure Input Column Name</label>
+                <input type="text" id="press_in_col" name="pressure_input_column" placeholder="e.g., Pressure In" required>
+
+                <label for="press_out_col">Pressure Output Column Name</label>
+                <input type="text" id="press_out_col" name="pressure_output_column" placeholder="e.g., Pressure Out" required>
+
+                <label for="boiler_col">Boiler Efficiency Column Name</label>
+                <input type="text" id="boiler_col" name="boiler_efficiency_column" placeholder="e.g., Boiler Efficiency" required>
+
+                <label for="machine_col">Machine Efficiency Column Name</label>
+                <input type="text" id="machine_col" name="machine_efficiency_column" placeholder="e.g., Machine Efficiency" required>
+
+                <label for="electrical_col">Electrical Work Column Name</label>
+                <input type="text" id="electrical_col" name="electrical_work_column" placeholder="e.g., Electrical Work" required>
+
+                <label for="file_upload">Select XLSX File</label>
+                <input type="file" id="file_upload" name="file" accept=".xlsx">
+
+                <button type="submit">Upload (UI only)</button>
+            </form>
+
+            <div class="nav-links">
+                <a href="/">Enthalpy Calculator</a>
+                <a href="/upload">Upload</a>
+                <a href="/flow">Mass Flow</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+"""
+    )
+
+
 @app.route("/download")
 def download():
     try:
