@@ -31,6 +31,10 @@ def calculateMassFlow(temperatureInput, temperatureOutput, pressureInput, pressu
 
     return mass / 10000000
 
+def calculateMassFlowWithEnthalpy(enthalpyInput, enthalpyOutput, power, boilerEfficiency, machineEfficiency):
+    mass = power / (boilerEfficiency * machineEfficiency * (enthalpyInput - enthalpyOutput))
+    return mass / 10000000
+
 def calculateIsentropicEnthalpy(pressureInput, temperature, pressureOutput):
     if pressureInput <= 0 or pressureOutput <= 0 or temperature <= 0:
         return 0.0

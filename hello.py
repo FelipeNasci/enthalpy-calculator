@@ -1,6 +1,6 @@
 from flask import Flask, request, render_template_string, send_file
 from calculator import calculateEnthalpy, calculateMassFlow
-from handleSpreadsheet import handleSpreadsheet
+from handleSpreadsheet import handleSpreadsheet, receiveCalcSheetParams
 from werkzeug.utils import secure_filename
 import os
 
@@ -921,6 +921,22 @@ def flow():
 
 @app.route("/calc-sheet", methods=["GET", "POST"])
 def calc_sheet():
+    if request.method == "POST":
+        filepath = None
+        if request.files.get("file") and request.files["file"].filename:
+            filename = secure_filename(request.files["file"].filename)
+            filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            request.files["file"].save(filepath)
+        receiveCalcSheetParams(
+            filepath,
+            request.form.get("temp_input_column"),
+            request.form.get("temp_output_column"),
+            request.form.get("pressure_input_column"),
+            request.form.get("pressure_output_column"),
+            request.form.get("boiler_efficiency_column"),
+            request.form.get("machine_efficiency_column"),
+            request.form.get("electrical_work_column"),
+        )
 
     return render_template_string("""
 <!DOCTYPE html>
@@ -1076,6 +1092,24 @@ def calc_sheet():
         .nav-links a:hover {
             color: #764ba2;
         }
+
+        .validation-error {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8787 100%);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 16px;
+            color: white;
+            font-size: 14px;
+            display: none;
+        }
+
+        .validation-error.visible {
+            display: block;
+        }
+
+        input:invalid:not(:placeholder-shown) {
+            border-color: #ff6b6b;
+        }
     </style>
 </head>
 <body>
@@ -1087,52 +1121,96 @@ def calc_sheet():
             </div>
 
             <div class="card-content">
-                <form method="POST" enctype="multipart/form-data">
+                <form method="POST" enctype="multipart/form-data" id="calc-sheet-form">
                     <div class="form-row">
                         <div class="form-group">
                             <label for="temp_in_col">Temperature Input Column Name</label>
-                            <input type="text" id="temp_in_col" name="temp_input_column" placeholder="e.g., Temp In" required>
+                            <input type="text" id="temp_in_col" name="temp_input_column" placeholder="e.g., Temp In" required minlength="1">
                         </div>
                         <div class="form-group">
                             <label for="temp_out_col">Temperature Output Column Name</label>
-                            <input type="text" id="temp_out_col" name="temp_output_column" placeholder="e.g., Temp Out" required>
+                            <input type="text" id="temp_out_col" name="temp_output_column" placeholder="e.g., Temp Out" required minlength="1">
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label for="press_in_col">Pressure Input Column Name</label>
-                            <input type="text" id="press_in_col" name="pressure_input_column" placeholder="e.g., Pressure In" required>
+                            <input type="text" id="press_in_col" name="pressure_input_column" placeholder="e.g., Pressure In" required minlength="1">
                         </div>
                         <div class="form-group">
                             <label for="press_out_col">Pressure Output Column Name</label>
-                            <input type="text" id="press_out_col" name="pressure_output_column" placeholder="e.g., Pressure Out" required>
+                            <input type="text" id="press_out_col" name="pressure_output_column" placeholder="e.g., Pressure Out" required minlength="1">
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label for="boiler_col">Boiler Efficiency Column Name</label>
-                            <input type="text" id="boiler_col" name="boiler_efficiency_column" placeholder="e.g., Boiler Efficiency" required>
+                            <input type="text" id="boiler_col" name="boiler_efficiency_column" placeholder="e.g., Boiler Efficiency" required minlength="1">
                         </div>
                         <div class="form-group">
                             <label for="machine_col">Machine Efficiency Column Name</label>
-                            <input type="text" id="machine_col" name="machine_efficiency_column" placeholder="e.g., Machine Efficiency" required>
+                            <input type="text" id="machine_col" name="machine_efficiency_column" placeholder="e.g., Machine Efficiency" required minlength="1">
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label for="electrical_col">Electrical Work Column Name</label>
-                        <input type="text" id="electrical_col" name="electrical_work_column" placeholder="e.g., Electrical Work" required>
+                        <input type="text" id="electrical_col" name="electrical_work_column" placeholder="e.g., Electrical Work" required minlength="1">
                     </div>
 
                     <div class="form-group">
                         <label for="file_upload">Select XLSX File</label>
-                        <input type="file" id="file_upload" name="file" accept=".xlsx">
+                        <input type="file" id="file_upload" name="file" accept=".xlsx" required>
+                        <div class="form-hint" style="font-size:12px;color:#999;margin-top:4px;">Only .xlsx files. Max 16 MB.</div>
                     </div>
+
+                    <div class="validation-error" id="validation-message" role="alert"></div>
 
                     <button type="submit">Upload (UI only)</button>
                 </form>
+
+                <script>
+                    document.getElementById('calc-sheet-form').addEventListener('submit', function(e) {
+                        var msgEl = document.getElementById('validation-message');
+                        msgEl.classList.remove('visible');
+                        msgEl.textContent = '';
+
+                        var fileInput = document.getElementById('file_upload');
+                        if (fileInput.files.length === 0) {
+                            e.preventDefault();
+                            msgEl.textContent = 'Please select an XLSX file.';
+                            msgEl.classList.add('visible');
+                            return;
+                        }
+                        var file = fileInput.files[0];
+                        var name = file.name.toLowerCase();
+                        if (!name.endsWith('.xlsx')) {
+                            e.preventDefault();
+                            msgEl.textContent = 'Only .xlsx files are accepted.';
+                            msgEl.classList.add('visible');
+                            return;
+                        }
+                        if (file.size > 16 * 1024 * 1024) {
+                            e.preventDefault();
+                            msgEl.textContent = 'File size must be 16 MB or less.';
+                            msgEl.classList.add('visible');
+                            return;
+                        }
+
+                        var textInputs = this.querySelectorAll('input[type="text"]');
+                        for (var i = 0; i < textInputs.length; i++) {
+                            if (!textInputs[i].value.trim()) {
+                                e.preventDefault();
+                                msgEl.textContent = 'Please fill in all column names.';
+                                msgEl.classList.add('visible');
+                                textInputs[i].focus();
+                                return;
+                            }
+                        }
+                    });
+                </script>
 
                 <div class="nav-links">
                     <a href="/">Enthalpy Calculator</a>
