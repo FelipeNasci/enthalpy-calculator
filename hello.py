@@ -933,9 +933,9 @@ def calc_sheet():
             request.form.get("temp_output_column"),
             request.form.get("pressure_input_column"),
             request.form.get("pressure_output_column"),
-            request.form.get("boiler_efficiency_column"),
-            request.form.get("machine_efficiency_column"),
-            request.form.get("electrical_work_column"),
+            request.form.get("boiler_efficiency"),
+            request.form.get("machine_efficiency"),
+            request.form.get("electrical_work"),
         )
 
     return render_template_string("""
@@ -1146,18 +1146,18 @@ def calc_sheet():
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="boiler_col">Boiler Efficiency Column Name</label>
-                            <input type="text" id="boiler_col" name="boiler_efficiency_column" placeholder="e.g., Boiler Efficiency" required minlength="1">
+                            <label for="boiler_val">Boiler Efficiency (%)</label>
+                            <input type="text" id="boiler_val" name="boiler_efficiency" placeholder="e.g., 85" required minlength="1">
                         </div>
                         <div class="form-group">
-                            <label for="machine_col">Machine Efficiency Column Name</label>
-                            <input type="text" id="machine_col" name="machine_efficiency_column" placeholder="e.g., Machine Efficiency" required minlength="1">
+                            <label for="machine_val">Machine Efficiency (%)</label>
+                            <input type="text" id="machine_val" name="machine_efficiency" placeholder="e.g., 90" required minlength="1">
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="electrical_col">Electrical Work Column Name</label>
-                        <input type="text" id="electrical_col" name="electrical_work_column" placeholder="e.g., Electrical Work" required minlength="1">
+                        <label for="electrical_val">Electrical Work (constant)</label>
+                        <input type="text" id="electrical_val" name="electrical_work" placeholder="e.g., 1000" required minlength="1">
                     </div>
 
                     <div class="form-group">
@@ -1203,7 +1203,7 @@ def calc_sheet():
                         for (var i = 0; i < textInputs.length; i++) {
                             if (!textInputs[i].value.trim()) {
                                 e.preventDefault();
-                                msgEl.textContent = 'Please fill in all column names.';
+                                msgEl.textContent = 'Please fill in all fields.';
                                 msgEl.classList.add('visible');
                                 textInputs[i].focus();
                                 return;

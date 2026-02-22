@@ -123,6 +123,15 @@ def receiveCalcSheetParams(
     machineEfficiency,
     electricalWork,
 ):
+    if filepath is None:
+        return
+    try:
+        boilerEffVal = float(boilerEfficiency)
+        machineEffVal = float(machineEfficiency)
+        electricalWorkVal = float(electricalWork)
+    except (TypeError, ValueError):
+        return
+
     df = pd.read_excel(filepath)
 
     enthalpiesInput = []
@@ -132,42 +141,56 @@ def receiveCalcSheetParams(
     massesFlow = []
 
     for _, linha in df.iterrows():
+        try:
+            temperatureInput = linha[temp_input_ecolumn]
+            temperatureOutput = linha[temp_output_column]
+            pressureInput = linha[pressure_input_column]
+            pressureOutput = linha[pressure_output_column]
 
-        temperatureInput = linha[temp_input_ecolumn]
-        temperatureOutput = linha[temp_output_column]
-        pressureInput = linha[pressure_input_column]
-        pressureOutput = linha[pressure_output_column]
+            if pd.isna(temperatureInput) or temperatureInput == "":
+                temperatureInput = 0
+            if pd.isna(temperatureOutput) or temperatureOutput == "":
+                temperatureOutput = 0
+            if pd.isna(pressureInput) or pressureInput == "":
+                pressureInput = 0
+            if pd.isna(pressureOutput) or pressureOutput == "":
+                pressureOutput = 0
 
-        enthalpyInput = calculateEnthalpy(temperatureInput, pressureInput)
-        enthalpyOutput = calculateEnthalpy(temperatureOutput, pressureOutput)
+            enthalpyInput = calculateEnthalpy(temperatureInput, pressureInput)
+            enthalpyOutput = calculateEnthalpy(temperatureOutput, pressureOutput)
 
-        isentropicEnthalpy = calculateIsentropicEnthalpy(
-            pressureInput, temperatureInput, pressureOutput
-        )
+            isentropicEnthalpy = calculateIsentropicEnthalpy(
+                pressureInput, temperatureInput, pressureOutput
+            )
+            efficiency = calculateEfficiency(
+                enthalpyInput, enthalpyOutput, isentropicEnthalpy
+            )
+            massFlow = calculateMassFlowWithEnthalpy(
+                enthalpyInput,
+                enthalpyOutput,
+                electricalWorkVal,
+                boilerEffVal,
+                machineEffVal,
+            )
 
-        efficiency = calculateEfficiency(
-            enthalpyInput, enthalpyOutput, isentropicEnthalpy
-        )
-
-        massFlow = calculateMassFlowWithEnthalpy(
-            enthalpyInput,
-            enthalpyOutput,
-            electricalWork,
-            boilerEfficiency,
-            machineEfficiency,
-        )
-
-        enthalpiesInput.append(enthalpyInput)
-        enthalpiesOutput.append(enthalpyOutput)
-        isentropicEnthalpies.append(isentropicEnthalpy)
-        efficiencies.append(efficiency)
-        massesFlow.append(massFlow)
+            enthalpiesInput.append(enthalpyInput)
+            enthalpiesOutput.append(enthalpyOutput)
+            isentropicEnthalpies.append(isentropicEnthalpy)
+            efficiencies.append(efficiency)
+            massesFlow.append(massFlow)
+        except (ValueError, TypeError, KeyError, ZeroDivisionError):
+            enthalpiesInput.append(None)
+            enthalpiesOutput.append(None)
+            isentropicEnthalpies.append(None)
+            efficiencies.append(None)
+            massesFlow.append(None)
 
     df["Entalpia Entrada (kJ/kg)"] = enthalpiesInput
     df["Entalpia Saída (kJ/kg)"] = enthalpiesOutput
     df["Entalpia Isentrópica (kJ/kg)"] = isentropicEnthalpies
     df["Eficência Turbina (%)"] = efficiencies
-    df["Vasáo Mássica (%)"] = massesFlow
+    df["Vazão Mássica (kg/s)"] = massesFlow
+    df.to_excel("newFile_mass_flow.xlsx", index=False)
 
 def main():
     try:
