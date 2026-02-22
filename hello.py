@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template_string, send_file
 from calculator import calculateEnthalpy, calculateMassFlow
-from handleSpreadsheet import handleSpreadsheet, receiveCalcSheetParams
+from handleSpreadsheet import handleSpreadsheet
+from src.controllers.handleSpreadsheet import handleSpreadsheet as handleSpreadsheetCalcSheet
 from werkzeug.utils import secure_filename
 import os
 
@@ -936,7 +937,7 @@ def calc_sheet():
                 filename = secure_filename(request.files["file"].filename)
                 filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
                 request.files["file"].save(filepath)
-                receiveCalcSheetParams(
+                handleSpreadsheetCalcSheet(
                     filepath,
                     request.form.get("temp_input_column"),
                     request.form.get("temp_output_column"),
