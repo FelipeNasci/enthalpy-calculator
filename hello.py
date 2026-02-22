@@ -1,7 +1,7 @@
 from flask import Flask, request, render_template_string, send_file
 from calculator import calculateEnthalpy, calculateMassFlow
 from handleSpreadsheet import handleSpreadsheet
-from src.controllers.handleSpreadsheet import handleSpreadsheet as handleSpreadsheetCalcSheet
+from src.routes.calculateAllValues.controllers.handleSpreadsheet import handleSpreadsheet as handleSpreadsheetCalcSheet
 from werkzeug.utils import secure_filename
 import os
 
@@ -920,7 +920,7 @@ def flow():
 """, result=result, error_message=error_message)
 
 
-@app.route("/calc-sheet", methods=["GET", "POST"])
+@app.route("/calc-all-values", methods=["GET", "POST"])
 def calc_sheet():
     success_message = None
     error_message = None
@@ -959,7 +959,7 @@ def calc_sheet():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculate Spreadsheet</title>
+    <title>Calculate All Values</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
@@ -1182,8 +1182,8 @@ def calc_sheet():
     <div class="container">
         <div class="card">
             <div class="card-header">
-                <h1>Calculate Spreadsheet</h1>
-                <p>Upload XLSX and indicate column names (frontend only)</p>
+                <h1>Calculate All Values</h1>
+                <p> enthalpiesInput | enthalpiesOutput | isentropicEnthalpies | efficiencies | massesFlow</p>
             </div>
 
             <div class="card-content">
