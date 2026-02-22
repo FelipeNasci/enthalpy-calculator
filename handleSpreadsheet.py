@@ -5,8 +5,10 @@ from calculator import (
     calculateIsentropicEnthalpy,
     calculateEfficiency,
     calculateMassFlowWithEnthalpy,
+    convertToKiloJauleForKilogram,
+    convertToPA,
+    convertToKelvin
 )
-
 
 def calcula_entalpia(temperatura_celsius, pressao_kgcm2):
     if pd.isna(temperatura_celsius) or pd.isna(pressao_kgcm2):
@@ -125,12 +127,6 @@ def receiveCalcSheetParams(
 ):
     if filepath is None:
         return
-    try:
-        boilerEffVal = float(boilerEfficiency)
-        machineEffVal = float(machineEfficiency)
-        electricalWorkVal = float(electricalWork)
-    except (TypeError, ValueError):
-        return
 
     df = pd.read_excel(filepath)
 
@@ -146,6 +142,9 @@ def receiveCalcSheetParams(
             temperatureOutput = linha[temp_output_column]
             pressureInput = linha[pressure_input_column]
             pressureOutput = linha[pressure_output_column]
+            boilerEffVal = linha[boilerEfficiency]
+            machineEffVal = linha[machineEfficiency]
+            electricalWorkVal = linha[electricalWork]
 
             if pd.isna(temperatureInput) or temperatureInput == "":
                 temperatureInput = 0
@@ -155,6 +154,20 @@ def receiveCalcSheetParams(
                 pressureInput = 0
             if pd.isna(pressureOutput) or pressureOutput == "":
                 pressureOutput = 0
+            if pd.isna(boilerEffVal) or boilerEffVal == "":
+                boilerEffVal = 0
+            if pd.isna(machineEffVal) or machineEffVal == "":
+                machineEffVal = 0
+            if pd.isna(electricalWorkVal) or electricalWorkVal == "":
+                electricalWorkVal = 0
+
+            temperatureInput = float(convertToKelvin(temperatureInput))
+            temperatureOutput = float(convertToKelvin(temperatureOutput))
+            pressureInput = float(convertToPA(pressureInput))
+            pressureOutput = float(convertToPA(pressureOutput))
+            boilerEffVal = float(boilerEffVal)
+            machineEffVal = float(machineEffVal)
+            electricalWorkVal = float(electricalWorkVal)
 
             enthalpyInput = calculateEnthalpy(temperatureInput, pressureInput)
             enthalpyOutput = calculateEnthalpy(temperatureOutput, pressureOutput)
@@ -173,9 +186,9 @@ def receiveCalcSheetParams(
                 machineEffVal,
             )
 
-            enthalpiesInput.append(enthalpyInput)
-            enthalpiesOutput.append(enthalpyOutput)
-            isentropicEnthalpies.append(isentropicEnthalpy)
+            enthalpiesInput.append(convertToKiloJauleForKilogram(enthalpyInput))
+            enthalpiesOutput.append(convertToKiloJauleForKilogram(enthalpyOutput))
+            isentropicEnthalpies.append(convertToKiloJauleForKilogram(isentropicEnthalpy))
             efficiencies.append(efficiency)
             massesFlow.append(massFlow)
         except (ValueError, TypeError, KeyError, ZeroDivisionError):
@@ -190,6 +203,7 @@ def receiveCalcSheetParams(
     df["Entalpia Isentrópica (kJ/kg)"] = isentropicEnthalpies
     df["Eficência Turbina (%)"] = efficiencies
     df["Vazão Mássica (kg/s)"] = massesFlow
+
     df.to_excel("newFile_mass_flow.xlsx", index=False)
 
 def main():

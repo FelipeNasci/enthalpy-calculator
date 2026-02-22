@@ -921,22 +921,36 @@ def flow():
 
 @app.route("/calc-sheet", methods=["GET", "POST"])
 def calc_sheet():
+    success_message = None
+    error_message = None
+    uploaded_file = None
+    download_link = None
+
     if request.method == "POST":
-        filepath = None
-        if request.files.get("file") and request.files["file"].filename:
-            filename = secure_filename(request.files["file"].filename)
-            filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-            request.files["file"].save(filepath)
-        receiveCalcSheetParams(
-            filepath,
-            request.form.get("temp_input_column"),
-            request.form.get("temp_output_column"),
-            request.form.get("pressure_input_column"),
-            request.form.get("pressure_output_column"),
-            request.form.get("boiler_efficiency"),
-            request.form.get("machine_efficiency"),
-            request.form.get("electrical_work"),
-        )
+        if "file" not in request.files or not request.files["file"].filename:
+            error_message = "No file selected"
+        elif not request.files["file"].filename.endswith(".xlsx"):
+            error_message = "Only .xlsx files are accepted"
+        else:
+            try:
+                filename = secure_filename(request.files["file"].filename)
+                filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                request.files["file"].save(filepath)
+                receiveCalcSheetParams(
+                    filepath,
+                    request.form.get("temp_input_column"),
+                    request.form.get("temp_output_column"),
+                    request.form.get("pressure_input_column"),
+                    request.form.get("pressure_output_column"),
+                    request.form.get("boiler_efficiency_column"),
+                    request.form.get("machine_efficiency_column"),
+                    request.form.get("electrical_work_column"),
+                )
+                uploaded_file = filename
+                success_message = f"File '{filename}' successfully processed"
+                download_link = "/download-mass-flow"
+            except Exception as e:
+                error_message = f"Error: {str(e)}"
 
     return render_template_string("""
 <!DOCTYPE html>
@@ -1110,6 +1124,57 @@ def calc_sheet():
         input:invalid:not(:placeholder-shown) {
             border-color: #ff6b6b;
         }
+
+        .success-card {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            border-radius: 8px;
+            padding: 24px;
+            margin-top: 24px;
+        }
+
+        .success-card h2 {
+            color: #2e7d32;
+            font-size: 18px;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .success-info {
+            color: #1b5e20;
+            font-size: 14px;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .download-link {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 10px 20px;
+            background: white;
+            color: #2e7d32;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 500;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .download-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+        }
+
+        .error-card {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8787 100%);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            color: white;
+        }
+
+        .error-card p {
+            font-size: 14px;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
@@ -1146,18 +1211,18 @@ def calc_sheet():
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="boiler_val">Boiler Efficiency (%)</label>
-                            <input type="text" id="boiler_val" name="boiler_efficiency" placeholder="e.g., 85" required minlength="1">
+                            <label for="boiler_col">Boiler Efficiency Column Name</label>
+                            <input type="text" id="boiler_col" name="boiler_efficiency_column" placeholder="e.g., Boiler Efficiency" required minlength="1">
                         </div>
                         <div class="form-group">
-                            <label for="machine_val">Machine Efficiency (%)</label>
-                            <input type="text" id="machine_val" name="machine_efficiency" placeholder="e.g., 90" required minlength="1">
+                            <label for="machine_col">Machine Efficiency Column Name</label>
+                            <input type="text" id="machine_col" name="machine_efficiency_column" placeholder="e.g., Machine Efficiency" required minlength="1">
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="electrical_val">Electrical Work (constant)</label>
-                        <input type="text" id="electrical_val" name="electrical_work" placeholder="e.g., 1000" required minlength="1">
+                        <label for="electrical_col">Electrical Work Column Name</label>
+                        <input type="text" id="electrical_col" name="electrical_work_column" placeholder="e.g., Electrical Work" required minlength="1">
                     </div>
 
                     <div class="form-group">
@@ -1168,8 +1233,26 @@ def calc_sheet():
 
                     <div class="validation-error" id="validation-message" role="alert"></div>
 
-                    <button type="submit">Upload (UI only)</button>
+                    <button type="submit">Process File</button>
                 </form>
+
+                {% if success_message %}
+                <div class="success-card">
+                    <h2>✓ File Processed Successfully</h2>
+                    <div class="success-info">
+                        <strong>File:</strong> {{ uploaded_file }}
+                    </div>
+                    {% if download_link %}
+                    <a href="{{ download_link }}" class="download-link">Download processed_mass_flow.xlsx</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if error_message %}
+                <div class="error-card">
+                    <p>✗ {{ error_message }}</p>
+                </div>
+                {% endif %}
 
                 <script>
                     document.getElementById('calc-sheet-form').addEventListener('submit', function(e) {
@@ -1222,7 +1305,23 @@ def calc_sheet():
     </div>
 </body>
 </html>
-""")
+""", success_message=success_message, error_message=error_message, uploaded_file=uploaded_file, download_link=download_link)
+
+
+@app.route("/download-mass-flow")
+def download_mass_flow():
+    try:
+        path = "newFile_mass_flow.xlsx"
+        if not os.path.exists(path):
+            return "File not found. Please process a spreadsheet first.", 404
+        return send_file(
+            path,
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            as_attachment=True,
+            download_name="processed_mass_flow.xlsx",
+        )
+    except Exception as e:
+        return f"Error downloading file: {str(e)}", 500
 
 
 @app.route("/download")

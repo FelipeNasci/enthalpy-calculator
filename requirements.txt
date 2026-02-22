@@ -1,5 +1,6 @@
 Flask
 pandas
+openpyxl
 CoolProp
 gunicorn
 python-dotenv

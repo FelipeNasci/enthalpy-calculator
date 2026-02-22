@@ -7,21 +7,17 @@ def convertToKelvin(temperature):
     return float(temperature) + 273.15
 
 def convertToKiloJauleForKilogram(jauleValue):
-    return jauleValue / 1000
+    return jauleValue / 1000000 
 
 def calculateEnthalpy(temperature, pressure):
     if temperature <= 0:
         return 0.0
-
-    _pressure = convertToPA(pressure)
-    _temperature = convertToKelvin(temperature)
-
     try:
-        enthalpy = PropsSI('H', 'P', _pressure, 'T', _temperature, 'Water')
+        enthalpy = PropsSI('H', 'P', pressure, 'T', temperature, 'Water')
     except Exception:
         return None
 
-    return convertToKiloJauleForKilogram(enthalpy) / 1000  # kJ/kg
+    return enthalpy
 
 def calculateMassFlow(temperatureInput, temperatureOutput, pressureInput, pressureOutput, power, boilerEfficiency, machineEfficiency):
     enthalpyInput = calculateEnthalpy(temperatureInput, pressureInput)
@@ -36,17 +32,17 @@ def calculateMassFlowWithEnthalpy(enthalpyInput, enthalpyOutput, power, boilerEf
     return mass / 10000000
 
 def calculateIsentropicEnthalpy(pressureInput, temperature, pressureOutput):
-    if pressureInput <= 0 or pressureOutput <= 0 or temperature <= 0:
-        return 0.0
+    # if pressureInput <= 0 or pressureOutput <= 0 or temperature <= 0:
+    #     return 0.0
     
-    _pressureInput = convertToPA(pressureInput)
-    _temperature = convertToKelvin(temperature)
-    _pressureOutput = convertToPA(pressureOutput)
+    # _pressureInput = convertToPA(pressureInput)
+    # _temperature = convertToKelvin(temperature)
+    # _pressureOutput = convertToPA(pressureOutput)
 
     # Entropia constante
-    entropy = PropsSI('S', 'P', _pressureInput, 'T', _temperature, 'Water')
+    entropy = PropsSI('S', 'P', pressureInput, 'T', temperature, 'Water')
     # Entalpia na saída com S constante
-    IsentropicEnthalpy = PropsSI('H', 'P', _pressureOutput, 'S', entropy, 'Water')
+    IsentropicEnthalpy = PropsSI('H', 'P', pressureOutput, 'S', entropy, 'Water')
     
     return IsentropicEnthalpy / 1000
 
