@@ -922,8 +922,7 @@ def flow():
 @app.route("/calc-sheet", methods=["GET", "POST"])
 def calc_sheet():
 
-    return render_template_string(
-        """
+    return render_template_string("""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -931,17 +930,152 @@ def calc_sheet():
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculate Spreadsheet</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Roboto', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
-        .container { width:100%; max-width:600px; }
-        .card { background:white; border-radius:8px; padding:24px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
-        .card-header { text-align:center; margin-bottom:16px; }
-        label { display:block; font-weight:500; margin-bottom:8px; }
-        input[type="text"], input[type="file"] { width:100%; padding:10px; border:1px solid #ddd; border-radius:4px; margin-bottom:12px; }
-        button { width:100%; padding:12px; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; border:none; border-radius:4px; cursor:pointer; }
-        .nav-links { text-align:center; margin-top:12px; }
-        .nav-links a { color:#667eea; margin:0 8px; text-decoration:none; font-weight:500; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .card-header h1 {
+            font-size: 28px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .card-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .card-content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group:last-of-type {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: 'Roboto', sans-serif;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="file"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .material-icons {
+            font-size: 20px;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        .nav-links {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #eee;
+        }
+
+        .nav-links a {
+            display: inline-block;
+            margin: 0 12px;
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #764ba2;
+        }
     </style>
 </head>
 <body>
@@ -952,45 +1086,65 @@ def calc_sheet():
                 <p>Upload XLSX and indicate column names (frontend only)</p>
             </div>
 
-            <form method="POST" enctype="multipart/form-data">
-                <label for="temp_in_col">Temperature Input Column Name</label>
-                <input type="text" id="temp_in_col" name="temp_input_column" placeholder="e.g., Temp In" required>
+            <div class="card-content">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="temp_in_col">Temperature Input Column Name</label>
+                            <input type="text" id="temp_in_col" name="temp_input_column" placeholder="e.g., Temp In" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="temp_out_col">Temperature Output Column Name</label>
+                            <input type="text" id="temp_out_col" name="temp_output_column" placeholder="e.g., Temp Out" required>
+                        </div>
+                    </div>
 
-                <label for="temp_out_col">Temperature Output Column Name</label>
-                <input type="text" id="temp_out_col" name="temp_output_column" placeholder="e.g., Temp Out" required>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="press_in_col">Pressure Input Column Name</label>
+                            <input type="text" id="press_in_col" name="pressure_input_column" placeholder="e.g., Pressure In" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="press_out_col">Pressure Output Column Name</label>
+                            <input type="text" id="press_out_col" name="pressure_output_column" placeholder="e.g., Pressure Out" required>
+                        </div>
+                    </div>
 
-                <label for="press_in_col">Pressure Input Column Name</label>
-                <input type="text" id="press_in_col" name="pressure_input_column" placeholder="e.g., Pressure In" required>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="boiler_col">Boiler Efficiency Column Name</label>
+                            <input type="text" id="boiler_col" name="boiler_efficiency_column" placeholder="e.g., Boiler Efficiency" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="machine_col">Machine Efficiency Column Name</label>
+                            <input type="text" id="machine_col" name="machine_efficiency_column" placeholder="e.g., Machine Efficiency" required>
+                        </div>
+                    </div>
 
-                <label for="press_out_col">Pressure Output Column Name</label>
-                <input type="text" id="press_out_col" name="pressure_output_column" placeholder="e.g., Pressure Out" required>
+                    <div class="form-group">
+                        <label for="electrical_col">Electrical Work Column Name</label>
+                        <input type="text" id="electrical_col" name="electrical_work_column" placeholder="e.g., Electrical Work" required>
+                    </div>
 
-                <label for="boiler_col">Boiler Efficiency Column Name</label>
-                <input type="text" id="boiler_col" name="boiler_efficiency_column" placeholder="e.g., Boiler Efficiency" required>
+                    <div class="form-group">
+                        <label for="file_upload">Select XLSX File</label>
+                        <input type="file" id="file_upload" name="file" accept=".xlsx">
+                    </div>
 
-                <label for="machine_col">Machine Efficiency Column Name</label>
-                <input type="text" id="machine_col" name="machine_efficiency_column" placeholder="e.g., Machine Efficiency" required>
+                    <button type="submit">Upload (UI only)</button>
+                </form>
 
-                <label for="electrical_col">Electrical Work Column Name</label>
-                <input type="text" id="electrical_col" name="electrical_work_column" placeholder="e.g., Electrical Work" required>
-
-                <label for="file_upload">Select XLSX File</label>
-                <input type="file" id="file_upload" name="file" accept=".xlsx">
-
-                <button type="submit">Upload (UI only)</button>
-            </form>
-
-            <div class="nav-links">
-                <a href="/">Enthalpy Calculator</a>
-                <a href="/upload">Upload</a>
-                <a href="/flow">Mass Flow</a>
+                <div class="nav-links">
+                    <a href="/">Enthalpy Calculator</a>
+                    <a href="/upload">Upload</a>
+                    <a href="/flow">Mass Flow</a>
+                </div>
             </div>
         </div>
     </div>
 </body>
 </html>
-"""
-    )
+""")
 
 
 @app.route("/download")
